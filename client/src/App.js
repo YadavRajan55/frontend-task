@@ -1,6 +1,152 @@
+import TradeStatisticsUI from './trad';
+import { Formik } from 'formik'
+import { useState, useEffect, useRef } from 'react'
+import { Spinner } from 'react-bootstrap';
+import * as yup from 'yup'
+import axios from "axios";
+import React from 'react';
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { Box, Button, TextField } from '@mui/material'
+import './index.css';
+
+let initialValue = {
+	tickerName: '',
+	date: '',
+}
+
+let validationSchemes = yup.object().shape({
+
+	tickerName: yup.string().required("required"),
+	date: yup.string().required("required"),
+})
+
 function App() {
+	let [ticker, setTicker] = useState({})
+	let [resTicker, setResTicker] = useState()
+	let [error, setError] = useState(null)
+	let [isLoading, setIsLoading] = useState(false)
+	let initialRender = useRef(true)
+
+	let isNonMobile = useMediaQuery("(min-width:600px)");
+
+	const errorComponent = error ? <div className="error">
+		<i class="material-icons error-icon"></i>
+		{error}
+	</div>
+		: '';
+
+
+	const handleFormSubmit = (value) => {
+		let uppderCaseSymbole = value.tickerName
+		setTicker({ stocksTicker: uppderCaseSymbole.toUpperCase(), Date: value.date })
+		setIsLoading(true)
+	}
+
+	let fetchTickerData = () => {
+		console.log("----------ticker -----------", ticker)
+		setError(null);
+		if (Object.keys(ticker).length !== 0) {
+			axios.post(`http://localhost:5000/api/fetchStockData`, ticker).then((response) => {
+				console.log("---------------response-----------------", response.data)
+				if (response.status === 200) {
+					setIsLoading(false)
+					setResTicker(response.data)
+				}
+			}).catch((error) => {
+				setIsLoading(false)
+				console.log("------catch block----error-----------------", error.message)
+
+				if (error.message === 'Network Error') {
+					setError('Network Error: Unable to connect to the server');
+				}
+			})
+		}
+
+	}
+
+	useEffect(() => {
+		if (initialRender.current) {
+			initialRender.current = false
+		} else {
+			if (Object.keys(ticker).length !== 0) {
+				fetchTickerData()
+			}
+		}
+
+	}, [ticker])
 	return (
-		<h1>Hello world</h1>
+		<div className="max-w-[1240px] shadow-xl min-h-[400px] mx-auto mt-20 p-3">
+
+			{/* <Form /> */}
+			<Box m="20px">
+
+				<Formik
+					onSubmit={handleFormSubmit}
+					initialValues={initialValue}
+					validationSchema={validationSchemes}
+				>
+					{({ values, errors, touched, handleBlur, handleChange, handleSubmit }) => (
+						<form onSubmit={handleSubmit} >
+							<Box display="grid" gap="30px" gridTemplateColumns="repeat(4,minmax(0,1fr))" sx={{ "& > div": { gridColumn: isNonMobile ? undefined : "span 4" }, }}
+
+							>
+								<TextField
+									fullWidth
+									variant='filled'
+									id='tickerName'
+									type='text'
+									label='Stock Symbol'
+									onBlur={handleBlur}
+									onChange={handleChange}
+									value={values.tickerName}
+									name='tickerName'
+									error={!!touched.tickerName && !!errors.tickerName}
+									helperText={touched.tickerName && errors.tickerName}
+									sx={{ gridColumn: "span 2" }}
+
+
+								/>
+								<TextField
+									fullWidth
+									variant='filled'
+									id='date'
+									type='date'
+									label=''
+									onBlur={handleBlur}
+									onChange={handleChange}
+									value={values.date}
+									name='date'
+									error={!!touched.date && !!errors.date}
+									helperText={touched.date && errors.date}
+									sx={{ gridColumn: "span 2" }}
+
+								/>
+							</Box>
+							{errorComponent}
+							<Box display="flex" justifyContent="end" mt="20px">
+								<Button type='submit' color="secondary" variant='contained'>
+									Submit
+								</Button>
+							</Box>
+						</form>
+					)}
+				</Formik>
+				{isLoading && (
+					<Box display="flex" justifyContent="center">
+						<Spinner animation="border" role="status">
+							<span className="visually-hidden"></span>
+						</Spinner>
+					</Box>
+				)}
+				{resTicker && (
+					<React.Fragment>
+						<TradeStatisticsUI tradeData={resTicker} />
+						{/* <StockChart data={resTicker} /> */}
+					</React.Fragment>
+				)}
+			</Box>
+
+		</div>
 	);
 }
 
