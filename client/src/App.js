@@ -21,11 +21,9 @@ let validationSchemes = yup.object().shape({
 })
 
 function App() {
-	let [ticker, setTicker] = useState({})
-	let [resTicker, setResTicker] = useState()
-	let [error, setError] = useState(null)
-	let [isLoading, setIsLoading] = useState(false)
-	let initialRender = useRef(true)
+	const [resTicker, setResTicker] = useState(null)
+	const [error, setError] = useState(null)
+	const [isLoading, setIsLoading] = useState(false)
 
 	let isNonMobile = useMediaQuery("(min-width:600px)");
 
@@ -38,48 +36,37 @@ function App() {
 
 	const handleFormSubmit = (value) => {
 		let uppderCaseSymbole = value.tickerName
-		setTicker({ stocksTicker: uppderCaseSymbole.toUpperCase(), Date: value.date })
+
 		setIsLoading(true)
+		fetchTickerData({ stocksTicker: uppderCaseSymbole.toUpperCase(), Date: value.date })
 	}
 
-	let fetchTickerData = () => {
-		console.log("----------ticker -----------", ticker)
+	const fetchTickerData = (ticker) => {
 		setError(null);
-		if (Object.keys(ticker).length !== 0) {
-			axios.post(`http://localhost:5000/api/fetchStockData`, ticker).then((response) => {
-				console.log("---------------response-----------------", response.data)
-				if (response.status === 200) {
-					setIsLoading(false)
-					setResTicker(response.data)
-				}
-			}).catch((error) => {
+		setResTicker(null)
+		axios.post(`http://localhost:5000/api/fetchStockData`, ticker).then((response) => {
+			if (response.status === 200) {
 				setIsLoading(false)
-				console.log("------catch block----error-----------------", error.message)
-
-				if (error.message === 'Network Error') {
-					setError('Network Error: Unable to connect to the server');
-				}
-			})
-		}
+				setResTicker(response.data)
+			}
+		}).catch((error) => {
+			console.log("error-----------", error.message, error)
+			setIsLoading(false)
+			if (error.message === 'Network Error') {
+				setError('Network Error: Unable to connect to the server');
+			} else if (error.message === 'Request failed with status code 404') {
+				setError('Data Not Found: Please Enter Valid Stock Symbol')
+			} else {
+				setError('Server issue try again Some Time')
+			}
+		})
 
 	}
 
-	useEffect(() => {
-		if (initialRender.current) {
-			initialRender.current = false
-		} else {
-			if (Object.keys(ticker).length !== 0) {
-				fetchTickerData()
-			}
-		}
 
-	}, [ticker])
 	return (
 		<div className="max-w-[1240px] shadow-xl min-h-[400px] mx-auto mt-20 p-3">
-
-			{/* <Form /> */}
 			<Box m="20px">
-
 				<Formik
 					onSubmit={handleFormSubmit}
 					initialValues={initialValue}

@@ -22,17 +22,19 @@ const TradeStatisticsUI = ({ tradeData }) => {
                 <TradeStatisticCard title="Opening Price" value={open} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
-                <TradeStatisticCard title="Highest Price" value={high} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-                <TradeStatisticCard title="Lowest Price" value={low} />
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
                 <TradeStatisticCard title="Closing Price" value={close} />
             </Grid>
             <Grid item xs={12} sm={6} md={4}>
                 <TradeStatisticCard title="Volume" value={volume} />
             </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+                <TradeStatisticCard title="Highest Price" value={high} />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+                <TradeStatisticCard title="Lowest Price" value={low} />
+            </Grid>
+
+
         </Grid>
     );
 };
